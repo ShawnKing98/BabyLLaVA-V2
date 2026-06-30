@@ -1,0 +1,51 @@
+# Python
+__pycache__
+*.pyc
+*.egg-info
+dist
+
+# Log
+*.log
+*.log.*
+*.json
+*.jsonl
+*.csv
+*.out
+*.o*
+*.po*
+
+# Data
+!**/alpaca-data-conversation.json
+playground/data
+
+# Editor
+.idea
+*.swp
+
+# Other
+.DS_Store
+wandb
+output
+
+*checkpoints*
+ckpts*
+vitllm_ft_output
+
+.ipynb_checkpoints
+*.ipynb
+
+# DevContainer
+!.devcontainer/*
+
+# Demo
+serve_images/
+
+
+# Output
+ft_output/
+vitllm_ft_output/
+gpt_caption_vitllm_ft_output/
+mix_output/
+
+# abandoned
+other_scripts/
