@@ -55,7 +55,49 @@ pip install flash-attn==2.6.3 --no-build-isolation
 
 ## Data Preparation
 
-The training data uses post-processed data from the SAYCam dataset, which is hosted on the Databrary platform. According to SAYCam's regulation terms, we cannot publicly share the dataset here. We are currently working towards putting our dataset on Databrary as well, please stay tuned for future updates. In the meantime, If you are interested in an early access to the dataset, feel free to email the author team with your IRB approval / proof of access to SAYCam, we are happy to assist you with access to the training dataset.
+The training data uses post-processed data from the SAYCam dataset, which is hosted on the [Databrary](https://nyu.databrary.org/volume/564) platform. According to SAYCam's regulation terms, we cannot publicly share the dataset here. We are currently working towards putting our dataset on Databrary as well, please stay tuned for future updates.
+
+### Instruction Finetuning Data Sample: Ego4D Variant
+
+Due to the limited availability of the SAYCam dataset, we additionally release a publicly shareable instruction finetuning [sample](https://huggingface.co/datasets/wsashawn/babyllava_v2_instruction_ft_Ego4D) built on [Ego4D](https://ego4d-data.org/). It covers five tasks: counting, left/right relations, spatial details, synthetic comparison, and subitizing. The sample can be used as a drop-in reference for the format expected by phase 3 training.
+
+From the repository root, download it into `playground/data/Ego4D_instruction_ft` so that the relative image paths inside the annotation files resolve correctly:
+
+```bash
+hf download wsashawn/babyllava_v2_instruction_ft_Ego4D \
+    --repo-type dataset \
+    --local-dir playground/data/Ego4D_instruction_ft
+```
+
+The resulting folder looks like:
+
+```
+playground/data/Ego4D_instruction_ft
+├── count_train.json              # 14,775 samples
+├── leftright_train.json          # 14,775 samples
+├── spatialdetails_train.json     # 29,757 samples
+├── compare_synthetic_train.json  # 14,775 samples
+├── subitize_train.json           # 14,775 samples
+└── images/
+    ├── count/
+    ├── leftright/
+    ├── spatialdetails/
+    ├── compare_synthetic/
+    └── subitize/
+```
+
+Each entry follows the standard LLaVA conversation format, with `image` given as a list of paths relative to the dataset root. Multi-image tasks retain an additional source subdirectory where necessary to distinguish different images that have the same original filename.
+
+```json
+{
+  "id": "count_0",
+  "image": ["images/count/d08f05ff-d72b-410c-9081-2d5fc2eaaa52_1260_bottle_7.jpeg"],
+  "conversations": [
+    {"from": "human", "value": "How many bottle do you see?"},
+    {"from": "gpt", "value": "7"}
+  ]
+}
+```
 
 ## Download Checkpoints
 
@@ -106,6 +148,24 @@ Run the following command for phase 3 training (instruction finetuning). This sc
 ```bash
 bash scripts/babyLLaVA_train/sweep_instruction_ft.sh
 ```
+
+#### Phase 3 on the Ego4D Sample
+
+For phase 3 training with the publicly available Ego4D sample:
+
+1. From the repository root, download the dataset into `playground/data/Ego4D_instruction_ft` using the command in [Ego4D Instruction Finetuning Sample](#instruction-finetuning-data-sample-ego4d-variant). Confirm that the five `*_train.json` files and the five task directories under `images/` are present.
+2. Download the [phase 2 checkpoint](https://huggingface.co/wsashawn/babyllava_v2_phase2) and the [vision backbone checkpoint](https://huggingface.co/wsashawn/babyllava_v2_vision_backbone).
+3. Edit `scripts/babyLLaVA_train/sweep_instruction_ft_ego4d.sh` and replace the placeholders:
+  - `backbones` with your local phase 2 checkpoint folder.
+  - `--vision_tower` with your local vision backbone checkpoint (`.pth`).
+  - `EGO4D_DATA_ROOT` only if you downloaded the dataset somewhere else.
+4. Launch the five sequential instruction-tuning runs:
+
+```bash
+bash scripts/babyLLaVA_train/sweep_instruction_ft_ego4d.sh
+```
+
+The script aligns `datasets`, `run_names`, and `image_folders` by task. Each `--image_folder` points to the dataset root, so the relative `images/...` paths inside every training JSON resolve automatically. Checkpoints are written to `./checkpoints_instruction_ft_ego4d`.
 
 ## Citation
 
